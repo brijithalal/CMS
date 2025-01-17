@@ -1,4 +1,4 @@
-/myvenv
-cms/cms/setting.py
+/myvenv/
+cms/cms/settings.py
 clinic/migrations
 __pycache__/
