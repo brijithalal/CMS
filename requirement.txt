@@ -1,0 +1,13 @@
+asgiref==3.8.1
+Django==5.1.5
+sqlparse==0.5.3
+tzdata==2024.2
+
+django
+djangorestframework
+pyyaml
+requests
+django-cors-headers
+mysqlclient
+pillow
+djangorestframework-simplejwt
