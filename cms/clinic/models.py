@@ -12,6 +12,7 @@ from django.contrib.auth.models import AbstractUser
 
 # 2. Department Table
 class Department(models.Model):
+
     department_name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
     is_active = models.BooleanField(default=True)
@@ -35,14 +36,14 @@ class Qualification(models.Model):
 class Staff(AbstractUser):
     # username = models.CharField(max_length=100, unique=True)
     # password = models.CharField(max_length=100)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
-    qualification = models.ForeignKey(Qualification, on_delete=models.SET_NULL, null=True)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    qualification = models.ManyToManyField(Qualification)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # first_name = models.CharField(max_length=100)
     # last_name = models.CharField(max_length=100)
-    dob = models.DateField(null=True, blank=True)
-    profile_image = models.ImageField(upload_to='clinic/images/')
+    dob = models.DateField()
+    profile_image = models.ImageField(upload_to='clinic/images/',null=True,blank=True)
     gender = models.CharField(max_length=20)
     contact = models.CharField(max_length=20)
     # email = models.EmailField(unique=True)
@@ -64,12 +65,21 @@ class WorkHistory(models.Model):
     
     def __str__(self):
         return self.staff.username
+    
+class Specialization(models.Model):
+    # qualification = models.ManyToManyField(Qualification)
+    specialization_name = models.CharField(max_length=100)
+    description = models.TextField()
 
+    
+    def __str__(self):
+        return self.specialization_name
 
 # 6. Doctor Table
 class Doctor(models.Model):
     staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
-    specialization = models.ManyToManyField(Qualification)
+    specialization = models.ManyToManyField(Specialization)
+    qualification = models.ManyToManyField(Qualification)
     doctor_code = models.CharField(max_length=50, unique=True)
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
     consultation_days = models.CharField(max_length=100)
@@ -85,7 +95,7 @@ class Doctor(models.Model):
         Generate a unique receptionist code starting with 'R' followed by a unique identifier.
         """
         unique_id = uuid.uuid4().hex[:6].upper()  # First 6 characters of UUID for uniqueness
-        return f"R{unique_id}"
+        return f"D{unique_id}"
 
     def save(self, *args, **kwargs):
         if not self.doctor_code:  # Only generate the code if it hasn't been set already
@@ -98,37 +108,30 @@ class Doctor(models.Model):
 
 
 # 7. Specialization Table
-class Specialization(models.Model):
-    qualification = models.ManyToManyField(Qualification)
-    specialization_name = models.CharField(max_length=100)
-    description = models.TextField()
 
-    
-    def __str__(self):
-        return self.specialization_name
 
 
 # 8. Patient Table
 class Patient(models.Model):
     patient_code = models.CharField(max_length=50, unique=True)
-    blood_group = models.CharField(max_length=10)
+    blood_group = models.CharField(max_length=10,null=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     contact = models.CharField(max_length=20)
-    email = models.EmailField(unique=True)
-    insurance_provider = models.CharField(max_length=100)
-    insurance_number = models.CharField(max_length=50)
-    insurance_validity = models.DateField()
+    email = models.EmailField(unique=True,null=True)
+    insurance_provider = models.CharField(max_length=100,null=True,blank=True)
+    insurance_number = models.CharField(max_length=50,null=True,blank=True)
+    insurance_validity = models.DateField(null=True,blank=True)
     gender = models.CharField(max_length=20)
-    dob = models.DateField()
-    address = models.TextField()
+    dob = models.DateField(null=True,blank=True)
+    address = models.TextField(null=True)
 
     def generate_patient_code(self):
         """
         Generate a unique receptionist code starting with 'R' followed by a unique identifier.
         """
         unique_id = uuid.uuid4().hex[:6].upper()  # First 6 characters of UUID for uniqueness
-        return f"R{unique_id}"
+        return f"P{unique_id}"
 
     def save(self, *args, **kwargs):
         if not self.patient_code:  # Only generate the code if it hasn't been set already
@@ -260,7 +263,7 @@ class Receptionist(models.Model):
     staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
     receptionist_code = models.CharField(max_length=100,unique=True)
     years_of_experience = models.PositiveIntegerField()
-    education_qualification = models.CharField(max_length=100)
+    education_qualification = models.ManyToManyField(Qualification)
     base_salary = models.DecimalField(max_digits=10, decimal_places=2)
     is_active = models.BooleanField(default=True)
 
@@ -278,5 +281,5 @@ class Receptionist(models.Model):
         super(Receptionist, self).save(*args, **kwargs)
 
     def __str__(self):
-        return self.staff
+        return self.staff.username
 
